@@ -4,28 +4,22 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 
-import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
 @JsonInclude(JsonInclude.Include.ALWAYS)
-@JsonDeserialize(builder = Greeting.GreetingBuilder.class)
+@JsonDeserialize(builder = UserEntity.UserEntityBuilder.class)
 @Value
 @Builder
 @AllArgsConstructor
-public class Greeting {
+public class UserEntity {
 
     @NonNull
-    @ApiModelProperty(value = "id", required = true)
-    private final Long id;
-
-    @NonNull
-    @ApiModelProperty(value = "contet", required = true)
-    private final String content;
+    private String email;
 
     @JsonPOJOBuilder(withPrefix = "")
-    public static final class GreetingBuilder {
+    public static final class UserEntityBuilder {
     }
 }

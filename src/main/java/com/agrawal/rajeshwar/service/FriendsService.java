@@ -1,7 +1,8 @@
 package com.agrawal.rajeshwar.service;
 
-import com.agrawal.rajeshwar.dto.User;
+import com.agrawal.rajeshwar.api.model.UserEntity;
+import com.agrawal.rajeshwar.exceptions.InvalidUserException;
 
 public interface FriendsService {
-    User saveUser(User user);
+    int saveUser(UserEntity user) throws InvalidUserException;
 }

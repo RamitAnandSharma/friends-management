@@ -10,7 +10,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.agrawal.rajeshwar.api.model.Greeting;
-import com.agrawal.rajeshwar.dto.User;
+import com.agrawal.rajeshwar.api.model.UserEntity;
+import com.agrawal.rajeshwar.exceptions.InvalidUserException;
 import com.agrawal.rajeshwar.service.FriendsService;
 
 import io.swagger.annotations.Api;
@@ -37,14 +38,12 @@ public class GreetingController {
 	    @ApiResponse(code = 422, message = "Invalid request parameters", response = Greeting.class),
 	    @ApiResponse(code = 500, message = "Internal Server Error", response = Greeting.class) })
     public Greeting greeting(
-	    @RequestParam(value = "name", defaultValue = "World", required = true) @NonNull String name) {
+	    @RequestParam(value = "name", defaultValue = "World", required = true) @NonNull String name)
+	    throws InvalidUserException {
 
-	User user = new User();
-	user.setName("Rajeshwar");
-	user.setEmail("Agrawal");
-	this.friendsService.saveUser(user);
+	int id = this.friendsService.saveUser(UserEntity.builder().email("abe@gmail.com").build());
 
-	log.debug(user.toString());
+	log.debug(id + "");
 
 	return new Greeting(this.counter.incrementAndGet(), String.format(GreetingController.template, name));
     }
