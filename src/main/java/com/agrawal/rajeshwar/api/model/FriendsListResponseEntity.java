@@ -1,5 +1,7 @@
 package com.agrawal.rajeshwar.api.model;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -10,11 +12,15 @@ import lombok.Builder;
 import lombok.Value;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonDeserialize(builder = AddFriendsResponseEntity.AddFriendsResponseEntityBuilder.class)
+@JsonDeserialize(builder = FriendsListResponseEntity.AddFriendsResponseEntityBuilder.class)
 @Value
 @Builder
 @AllArgsConstructor
-public class AddFriendsResponseEntity implements ErrorResponseEntityInterface {
+public class FriendsListResponseEntity implements ErrorResponseEntityInterface {
+
+    private List<String> friends;
+
+    private Long count;
 
     private boolean success;
 
@@ -25,7 +31,7 @@ public class AddFriendsResponseEntity implements ErrorResponseEntityInterface {
     }
 
     @JsonIgnore
-    public static AddFriendsResponseEntity createErrorResponseEntity(String message) {
-	return AddFriendsResponseEntity.builder().success(false).errorMessage(message).build();
+    public static FriendsListResponseEntity createErrorResponseEntity(String message) {
+	return FriendsListResponseEntity.builder().success(false).errorMessage(message).build();
     }
 }

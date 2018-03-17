@@ -1,20 +1,22 @@
 package com.agrawal.rajeshwar.service.impl;
 
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import com.agrawal.rajeshwar.api.model.AddFriendsResponseEntity;
 import com.agrawal.rajeshwar.api.model.FriendsEntity;
+import com.agrawal.rajeshwar.api.model.FriendsListResponseEntity;
 import com.agrawal.rajeshwar.api.model.UserEntity;
 import com.agrawal.rajeshwar.dao.FriendsRepository;
 import com.agrawal.rajeshwar.dao.UserRepository;
-import com.agrawal.rajeshwar.dto.Friends;
 import com.agrawal.rajeshwar.dto.User;
 import com.agrawal.rajeshwar.exceptions.InvalidUserException;
 import com.agrawal.rajeshwar.service.FriendsService;
@@ -34,30 +36,55 @@ public class FriendsServiceImpl implements FriendsService {
     private FriendsRepository friendsRepository;
 
     private User saveIfNotExist(UserEntity userEntity) throws InvalidUserException {
+
 	if (userEntity == null) {
 	    throw new InvalidUserException("User cannot be null");
 	}
-
-	if (StringUtils.isEmpty(userEntity.getEmail())) {
-	    throw new InvalidUserException("User Email cannot be null");
-	}
-	if (!EmailValidator.isValidMail(userEntity.getEmail())) {
-	    throw new InvalidUserException("Invalid Email " + userEntity.getEmail());
-	}
-	User existingUser = this.userRepository.findFirstByEmail(userEntity.getEmail());
+	String sanitizeEmail = FriendsServiceImpl.sanitizeEmail(userEntity.getEmail());
+	this.validateEmailOrThrowException(sanitizeEmail);
+	User existingUser = this.userRepository.findFirstByEmail(sanitizeEmail);
 	if (existingUser == null) {
-	    return this.userRepository.save(User.builder().email(userEntity.getEmail()).build());
+	    return this.userRepository.save(User.builder().email(sanitizeEmail).build());
 	} else {
 	    return existingUser;
 	}
 
     }
 
+    private void validateEmailOrThrowException(String email) throws InvalidUserException {
+	if (StringUtils.isEmpty(email)) {
+	    throw new InvalidUserException("User Email cannot be null");
+	}
+	if (!EmailValidator.isValidMail(email)) {
+	    throw new InvalidUserException("Invalid Email " + email);
+	}
+    }
+
+    private static String sanitizeEmail(String email) {
+	return Optional.ofNullable(email).orElse("").trim().toLowerCase();
+    }
+
     @Transactional(rollbackOn = Exception.class)
     @Override
     public AddFriendsResponseEntity addFriends(FriendsEntity friendsEntity) {
-	UserEntity user1 = UserEntity.builder().email(friendsEntity.getFriends().get(0)).build();
-	UserEntity user2 = UserEntity.builder().email(friendsEntity.getFriends().get(1)).build();
+
+	if (CollectionUtils.isEmpty(friendsEntity.getFriends())) {
+	    return AddFriendsResponseEntity.createErrorResponseEntity("Friend list cannot be empty");
+	}
+	if (friendsEntity.getFriends().size() != 2) {
+	    return AddFriendsResponseEntity.createErrorResponseEntity(
+		    "Please provide only 2 emails to make them friends");
+	}
+
+	UserEntity user1 = UserEntity.builder()
+				     .email(FriendsServiceImpl.sanitizeEmail(friendsEntity.getFriends().get(0)))
+				     .build();
+	UserEntity user2 = UserEntity.builder()
+				     .email(FriendsServiceImpl.sanitizeEmail(friendsEntity.getFriends().get(1)))
+				     .build();
+	if (user1.getEmail().equals(user2.getEmail())) {
+	    return AddFriendsResponseEntity.createErrorResponseEntity("Cannot make friends, if users are same");
+	}
 	User user1Dto = null;
 	User user2Dto = null;
 	try {
@@ -65,38 +92,51 @@ public class FriendsServiceImpl implements FriendsService {
 	    user2Dto = this.saveIfNotExist(user2);
 	} catch (InvalidUserException e) {
 	    log.error(e.getMessage(), e);
-	    return AddFriendsResponseEntity.builder().success(false).errorMessage(e.getMessage()).build();
+	    return AddFriendsResponseEntity.createErrorResponseEntity(e.getMessage());
 	}
 
-	System.out.println(user1Dto);
-	System.out.println(user2Dto);
+	System.out.println("user 1 before \n" + user1Dto);
+	System.out.println("user 2 before \n" + user2Dto);
 
-	Friends user1Friends = Friends.builder().user(user1Dto).friendId(user2Dto.getId()).build();
-	Set<Friends> friendsOfUser1 = Optional.ofNullable(user1Dto.getFriends()).orElse(Sets.newHashSet());
-	if (friendsOfUser1.contains(user1Friends)) {
-	    return AddFriendsResponseEntity.builder()
-					   .success(false)
-					   .errorMessage("Users " + user1Dto.getEmail() + " and " + user2Dto.getEmail()
-						   + " are already friends.")
-					   .build();
-	}
-	friendsOfUser1.add(user1Friends);
-	user1Dto.setFriends(friendsOfUser1);
-	System.out.println("start");
+	user1Dto.addFriend(user2Dto);
 	this.userRepository.save(user1Dto);
 
-	Friends user2Friends = Friends.builder().user(user2Dto).friendId(user1Dto.getId()).build();
-	Set<Friends> friendsOfUser2 = Optional.ofNullable(user2Dto.getFriends()).orElse(Sets.newHashSet());
-	friendsOfUser2.add(user2Friends);
-	user2Dto.setFriends(friendsOfUser2);
-
+	user2Dto.addFriend(user1Dto);
 	this.userRepository.save(user2Dto);
-	System.out.println("end");
 
-	System.out.println(user1Dto);
-	System.out.println(user2Dto);
+	System.out.println("user 1 after\n " + user1Dto);
+	System.out.println("user 2 after\n" + user2Dto);
 
 	return AddFriendsResponseEntity.builder().success(true).build();
+
+    }
+
+    @Override
+    public FriendsListResponseEntity getFriendsList(String email) {
+	try {
+	    this.validateEmailOrThrowException(email);
+	} catch (InvalidUserException e) {
+	    log.error(e.getMessage(), e);
+	    return FriendsListResponseEntity.createErrorResponseEntity(e.getMessage());
+	}
+
+	User userDto = this.userRepository.findFirstByEmail(email.trim());
+	if (userDto == null) {
+	    return FriendsListResponseEntity.createErrorResponseEntity("User is not a registered member");
+	}
+
+	List<String> friendList = Optional.ofNullable(userDto.getFriends())
+					  .orElse(Sets.newHashSet())
+					  .stream()
+					  .map(User::getEmail)
+					  .filter(str -> StringUtils.isNotEmpty(str))
+					  .collect(Collectors.toList());
+
+	return FriendsListResponseEntity.builder()
+					.success(true)
+					.friends(friendList)
+					.count(Long.valueOf(friendList.size()))
+					.build();
 
     }
 
