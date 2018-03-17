@@ -1,10 +1,13 @@
 package com.agrawal.rajeshwar.dto;
 
+import java.util.Set;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,5 +31,8 @@ public class User {
     @Builder.Default
     @Column(nullable = false)
     private boolean isDelete = false;
+
+    @OneToMany(mappedBy = "user")
+    private Set<Friends> friends;
 
 }

@@ -4,7 +4,7 @@ import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 
 public class EmailValidator {
-    public static boolean validateMail(String str) {
+    public static boolean isValidMail(String str) {
 	boolean result = true;
 	try {
 	    InternetAddress emailAddr = new InternetAddress(str);
