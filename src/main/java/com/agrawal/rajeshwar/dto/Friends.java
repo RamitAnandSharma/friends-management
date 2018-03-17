@@ -18,11 +18,6 @@ import lombok.NoArgsConstructor;
 @Getter
 public class Friends {
 
-    @Override
-    public String toString() {
-	return "Friends [friendId=" + this.friendId + "]";
-    }
-
     @ManyToOne
     @JoinColumn(name = "id", nullable = false)
     private User user;

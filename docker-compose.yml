@@ -1,0 +1,25 @@
+version: '2.1'
+services:
+  appserver:
+    container_name: appserver
+    build:
+      context: .
+      dockerfile: springapp.dockerfile
+    ports:
+    - 8080:8080
+    volumes:
+    - .:/vol/development
+    depends_on:
+    - dbserver
+  dbserver:
+    container_name: dbserver
+    build:
+      context: .
+      dockerfile: mysqldb.dockerfile
+    ports:
+    - 3306:3306
+    environment:
+      MYSQL_DATABASE: db_example
+      MYSQL_USER: raj
+      MYSQL_PASSWORD: test1234
+      MYSQL_ROOT_PASSWORD: test1234

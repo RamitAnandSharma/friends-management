@@ -24,7 +24,7 @@ import io.swagger.annotations.ApiResponses;
 import lombok.NonNull;
 
 @RestController
-@Api(tags = { "greetings" })
+@Api(tags = { "Friends Management" })
 public class FriendsController {
 
     @Autowired

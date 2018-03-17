@@ -23,14 +23,12 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
-@Setter
 public class User implements Serializable {
     /**
      *
@@ -131,6 +129,40 @@ public class User implements Serializable {
 	    this.hasBlockedUsers = Sets.newHashSet();
 	}
 	this.hasBlockedUsers.add(user);
+    }
+
+    public Set<User> getAllFriends() {
+	// get all friends
+	Set<User> friends = Optional.ofNullable(this.getFriends()).orElse(Sets.newHashSet());
+	// get friends on other side
+	friends.addAll(Optional.ofNullable(this.getFriendOf()).orElse(Sets.newHashSet()));
+	return friends;
+    }
+
+    @Override
+    public int hashCode() {
+	final int prime = 31;
+	int result = 1;
+	result = prime * result + this.id;
+	return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+	if (this == obj) {
+	    return true;
+	}
+	if (obj == null) {
+	    return false;
+	}
+	if (this.getClass() != obj.getClass()) {
+	    return false;
+	}
+	User other = (User) obj;
+	if (this.id != other.id) {
+	    return false;
+	}
+	return true;
     }
 
 }

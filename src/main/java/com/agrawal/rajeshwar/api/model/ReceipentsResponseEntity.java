@@ -9,29 +9,27 @@ import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.NonNull;
 import lombok.Value;
 
-@JsonInclude(JsonInclude.Include.ALWAYS)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonDeserialize(builder = ReceipentsResponseEntity.ReceipentsResponseEntityBuilder.class)
 @Value
 @Builder
 @AllArgsConstructor
 public class ReceipentsResponseEntity implements ErrorResponseEntityInterface {
 
-    @NonNull
-    private List<String> recipients;
+	private List<String> recipients;
 
-    private boolean success;
+	private boolean success;
 
-    private String errorMessage;
+	private String errorMessage;
 
-    @JsonPOJOBuilder(withPrefix = "")
-    public static final class ReceipentsResponseEntityBuilder {
-    }
+	@JsonPOJOBuilder(withPrefix = "")
+	public static final class ReceipentsResponseEntityBuilder {
+	}
 
-    @JsonIgnore
-    public static ReceipentsResponseEntity createErrorResponseEntity(String message) {
-	return ReceipentsResponseEntity.builder().success(false).errorMessage(message).build();
-    }
+	@JsonIgnore
+	public static ReceipentsResponseEntity createErrorResponseEntity(String message) {
+		return ReceipentsResponseEntity.builder().success(false).errorMessage(message).build();
+	}
 }

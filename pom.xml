@@ -11,6 +11,7 @@
 	</parent>
 	<properties>
 		<java.version>1.8</java.version>
+		<start-class>com.agrawal.rajeshwar.Application</start-class>
 	</properties>
 
 	<build>
@@ -43,10 +44,20 @@
 		</dependency>
 
 		<!-- to validate mail address -->
+		<!-- https://mvnrepository.com/artifact/javax.mail/javax.mail-api -->
 		<dependency>
 			<groupId>com.sun.mail</groupId>
 			<artifactId>javax.mail</artifactId>
+			<version>1.5.5</version>
 		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/commons-validator/commons-validator -->
+		<dependency>
+			<groupId>commons-validator</groupId>
+			<artifactId>commons-validator</artifactId>
+			<version>1.6</version>
+		</dependency>
+
 
 		<dependency>
 			<groupId>io.springfox</groupId>
@@ -73,21 +84,30 @@
 			<artifactId>commons-lang3</artifactId>
 		</dependency>
 
+		<!-- test -->
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<version>2.16.0</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.12</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-test</artifactId>
+			<version>4.3.2.RELEASE</version>
+			<scope>test</scope>
+		</dependency>
+
 	</dependencies>
 
 
-	<repositories>
-		<repository>
-			<id>spring-releases</id>
-			<url>https://repo.spring.io/libs-release</url>
-		</repository>
-	</repositories>
-
-
-	<pluginRepositories>
-		<pluginRepository>
-			<id>spring-releases</id>
-			<url>https://repo.spring.io/libs-release</url>
-		</pluginRepository>
-	</pluginRepositories>
+	<!-- <repositories> <repository> <id>spring-releases</id> <url>https://repo.spring.io/libs-release</url> 
+		</repository> </repositories> <pluginRepositories> <pluginRepository> <id>spring-releases</id> 
+		<url>https://repo.spring.io/libs-release</url> </pluginRepository> </pluginRepositories> -->
 </project>

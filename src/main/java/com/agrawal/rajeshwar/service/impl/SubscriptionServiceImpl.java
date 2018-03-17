@@ -19,43 +19,54 @@ import com.agrawal.rajeshwar.dao.UserRepository;
 import com.agrawal.rajeshwar.dto.User;
 import com.agrawal.rajeshwar.exceptions.InvalidUserException;
 import com.agrawal.rajeshwar.service.SubscriptionService;
+import com.agrawal.rajeshwar.service.UserService;
 import com.agrawal.rajeshwar.utils.EmailUtils;
 import com.google.common.collect.Sets;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 public class SubscriptionServiceImpl implements SubscriptionService {
 
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private UserService userService;
+
     @Override
     public GeneralResponseEntity addFollow(SubscriptionRequestEntity addFollowerEntity) {
-	GeneralResponseEntity validationResult = this.validateSubscriptionEntity(addFollowerEntity);
-	if (validationResult != null) {
-	    return validationResult;
+
+	if (addFollowerEntity == null) {
+	    return GeneralResponseEntity.createErrorResponseEntity("Invalid parameters");
 	}
 
-	String requestorMail = EmailUtils.sanitizeEmail(addFollowerEntity.getRequestor());
-	String targetMail = EmailUtils.sanitizeEmail(addFollowerEntity.getTarget());
-
-	// validate same eamil
-	if (requestorMail.equals(targetMail)) {
-	    return GeneralResponseEntity.createErrorResponseEntity("Cannot add follower for same user");
-	}
-
-	User requestorDto = this.userRepository.findFirstByEmail(requestorMail);
-	User targetDto = this.userRepository.findFirstByEmail(targetMail);
-
-	if (requestorDto == null) {
-	    return GeneralResponseEntity.createErrorResponseEntity("No user exists for email " + requestorMail);
-	}
-
-	if (targetDto == null) {
-	    return GeneralResponseEntity.createErrorResponseEntity("No user exists for email " + targetMail);
+	User requestorDto, targetDto = null;
+	try {
+	    requestorDto = this.userService.validateEmailAndReturnUser(addFollowerEntity.getRequestor());
+	    targetDto = this.userService.validateEmailAndReturnUser(addFollowerEntity.getTarget());
+	} catch (InvalidUserException e) {
+	    log.error(e.getMessage(), e);
+	    return GeneralResponseEntity.createErrorResponseEntity(e.getMessage());
 	}
 
 	// System.out.println("requestorDto before \n" + requestorDto);
 	// System.out.println("targetDto before \n" + targetDto);
+
+	// validate same eamil
+	if (requestorDto.equals(targetDto)) {
+	    return GeneralResponseEntity.createErrorResponseEntity("Cannot add follower for same user");
+	}
+
+	// System.out.println("requestorDto before \n" + requestorDto);
+	// System.out.println("targetDto before \n" + targetDto);
+
+	// check if already follower
+	if (Optional.ofNullable(requestorDto.getIsFollowingUsers()).orElse(Sets.newHashSet()).contains(targetDto)) {
+	    return GeneralResponseEntity.createErrorResponseEntity("User " + requestorDto.getEmail()
+		    + " is already subscribed to upates from user " + targetDto.getEmail());
+	}
 
 	// add the requester in the followed by list of target
 	requestorDto.followAnotherUser(targetDto);
@@ -70,52 +81,34 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
     }
 
-    private GeneralResponseEntity validateSubscriptionEntity(SubscriptionRequestEntity addFollowerEntity) {
+    @Override
+    public GeneralResponseEntity blockUpdates(SubscriptionRequestEntity addFollowerEntity) {
 	if (addFollowerEntity == null) {
 	    return GeneralResponseEntity.createErrorResponseEntity("Invalid parameters");
 	}
+
+	User requestorDto, targetDto = null;
 	try {
-	    EmailUtils.validateEmailOrThrowException(addFollowerEntity.getRequestor());
+	    requestorDto = this.userService.validateEmailAndReturnUser(addFollowerEntity.getRequestor());
+	    targetDto = this.userService.validateEmailAndReturnUser(addFollowerEntity.getTarget());
 	} catch (InvalidUserException e) {
-	    return GeneralResponseEntity.createErrorResponseEntity(
-		    "Invalid email requestor user" + addFollowerEntity.getRequestor());
-	}
-
-	try {
-	    EmailUtils.validateEmailOrThrowException(addFollowerEntity.getTarget());
-	} catch (InvalidUserException e) {
-	    return GeneralResponseEntity.createErrorResponseEntity(
-		    "Invalid email of target user" + addFollowerEntity.getTarget());
-	}
-	return null;
-
-    }
-
-    @Override
-    public GeneralResponseEntity blockUpdates(SubscriptionRequestEntity addFollowerEntity) {
-	GeneralResponseEntity validationResult = this.validateSubscriptionEntity(addFollowerEntity);
-	if (validationResult != null) {
-	    return validationResult;
-	}
-	String requestorMail = EmailUtils.sanitizeEmail(addFollowerEntity.getRequestor());
-	String targetMail = EmailUtils.sanitizeEmail(addFollowerEntity.getTarget());
-	if (requestorMail.equals(targetMail)) {
-	    return GeneralResponseEntity.createErrorResponseEntity("Cannot block the same user");
-	}
-
-	User requestorDto = this.userRepository.findFirstByEmail(requestorMail);
-	User targetDto = this.userRepository.findFirstByEmail(targetMail);
-
-	if (requestorDto == null) {
-	    return GeneralResponseEntity.createErrorResponseEntity("No user exists for email " + requestorMail);
-	}
-
-	if (targetDto == null) {
-	    return GeneralResponseEntity.createErrorResponseEntity("No user exists for email " + targetMail);
+	    log.error(e.getMessage(), e);
+	    return GeneralResponseEntity.createErrorResponseEntity(e.getMessage());
 	}
 
 	// System.out.println("requestorDto before \n" + requestorDto);
 	// System.out.println("targetDto before \n" + targetDto);
+
+	// validate same eamil
+	if (requestorDto.equals(targetDto)) {
+	    return GeneralResponseEntity.createErrorResponseEntity("Cannot block updates for same user");
+	}
+
+	// check if user is already blocked
+	if (Optional.ofNullable(requestorDto.getHasBlockedUsers()).orElse(Sets.newHashSet()).contains(targetDto)) {
+	    return GeneralResponseEntity.createErrorResponseEntity("User " + requestorDto.getEmail()
+		    + " has already blocked updates from user " + targetDto.getEmail());
+	}
 
 	requestorDto.hasBlockedTheUser(targetDto);
 	this.userRepository.save(requestorDto);
@@ -134,22 +127,17 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 	if (updatesRequestEntity == null) {
 	    return ReceipentsResponseEntity.createErrorResponseEntity("Invalid parameters");
 	}
+
+	final User senderDto;
 	try {
-	    EmailUtils.validateEmailOrThrowException(updatesRequestEntity.getSender());
+	    senderDto = this.userService.validateEmailAndReturnUser(updatesRequestEntity.getSender());
 	} catch (InvalidUserException e) {
-	    return ReceipentsResponseEntity.createErrorResponseEntity(
-		    "Invalid email sender user" + updatesRequestEntity.getSender());
+	    return ReceipentsResponseEntity.createErrorResponseEntity(e.getMessage());
 	}
 
-	String senderMail = EmailUtils.sanitizeEmail(updatesRequestEntity.getSender());
-	User senderDto = this.userRepository.findFirstByEmail(senderMail);
-	if (senderDto == null) {
-	    return ReceipentsResponseEntity.createErrorResponseEntity("No user exists for email " + senderMail);
-	}
-
-	Set<User> receipents = Sets.newHashSet();
+	final Set<User> receipents = Sets.newHashSet();
 	// all friends of sender
-	receipents.addAll(Optional.ofNullable(senderDto.getFriends()).orElse(Sets.newHashSet()));
+	receipents.addAll(Optional.ofNullable(senderDto.getAllFriends()).orElse(Sets.newHashSet()));
 
 	// all those who follow the sender
 	receipents.addAll(Optional.ofNullable(senderDto.getIsFollowedByUsers()).orElse(Sets.newHashSet()));
@@ -161,16 +149,20 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 		receipentsInText.add(m.group());
 	    }
 	}
-	// System.out.println(receipentsInText);
+
 	// find all users in text
+	// filter invalid mail, to avoid lots of db query for may invalid mails
+	receipentsInText = receipentsInText.stream().filter(EmailUtils::isValidMail).collect(Collectors.toSet());
 	List<User> usersInText = this.userRepository.findAllByEmailIn(receipentsInText);
-	// System.out.println("users in text are " + usersInText);
 
 	// add all in text
 	receipents.addAll(usersInText);
 
 	// remove all users who have blocked the sender
 	receipents.removeAll(Optional.ofNullable(senderDto.getIsBlockedByUsers()).orElse(Sets.newHashSet()));
+
+	// remove this userhimself, incase he was in the text
+	receipents.remove(senderDto);
 
 	return ReceipentsResponseEntity.builder()
 				       .success(true)

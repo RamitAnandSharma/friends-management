@@ -20,6 +20,7 @@ import com.agrawal.rajeshwar.dao.UserRepository;
 import com.agrawal.rajeshwar.dto.User;
 import com.agrawal.rajeshwar.exceptions.InvalidUserException;
 import com.agrawal.rajeshwar.service.FriendsService;
+import com.agrawal.rajeshwar.service.UserService;
 import com.agrawal.rajeshwar.utils.EmailUtils;
 import com.google.common.collect.Sets;
 
@@ -30,15 +31,16 @@ import lombok.extern.slf4j.Slf4j;
 public class FriendsServiceImpl implements FriendsService {
 
     @Autowired
+    private UserService userService;
+
+    @Autowired
     private UserRepository userRepository;
 
-    private User saveIfNotExist(FriendsListRequestEntity userEntity) throws InvalidUserException {
+    private User saveIfNotExist(String email) throws InvalidUserException {
 
-	if (userEntity == null) {
-	    throw new InvalidUserException("User cannot be null");
-	}
-	String sanitizeEmail = EmailUtils.sanitizeEmail(userEntity.getEmail());
-	EmailUtils.validateEmailOrThrowException(sanitizeEmail);
+	EmailUtils.validateEmailOrThrowException(email);
+
+	final String sanitizeEmail = EmailUtils.sanitizeEmail(email);
 	User existingUser = this.userRepository.findFirstByEmail(sanitizeEmail);
 	if (existingUser == null) {
 	    return this.userRepository.save(User.builder().email(sanitizeEmail).build());
@@ -52,6 +54,10 @@ public class FriendsServiceImpl implements FriendsService {
     @Override
     public GeneralResponseEntity addFriends(FriendsEntity friendsEntity) {
 
+	if (friendsEntity == null) {
+	    return GeneralResponseEntity.createErrorResponseEntity("Invalid parameters");
+	}
+
 	if (CollectionUtils.isEmpty(friendsEntity.getFriends())) {
 	    return GeneralResponseEntity.createErrorResponseEntity("Friend list cannot be empty");
 	}
@@ -59,23 +65,18 @@ public class FriendsServiceImpl implements FriendsService {
 	    return GeneralResponseEntity.createErrorResponseEntity("Please provide only 2 emails to make them friends");
 	}
 
-	FriendsListRequestEntity user1 = FriendsListRequestEntity.builder()
-								 .email(EmailUtils.sanitizeEmail(
-									 friendsEntity.getFriends().get(0)))
-								 .build();
-	FriendsListRequestEntity user2 = FriendsListRequestEntity.builder()
-								 .email(EmailUtils.sanitizeEmail(
-									 friendsEntity.getFriends().get(1)))
-								 .build();
-	if (user1.getEmail().equals(user2.getEmail())) {
+	String email1 = EmailUtils.sanitizeEmail(friendsEntity.getFriends().get(0));
+	String email2 = EmailUtils.sanitizeEmail(friendsEntity.getFriends().get(1));
+
+	if (email1.equals(email2)) {
 	    return GeneralResponseEntity.createErrorResponseEntity("Cannot make friends, if users are same");
 	}
 	User user1Dto = null;
 	User user2Dto = null;
 	// create and save them if they dont exist
 	try {
-	    user1Dto = this.saveIfNotExist(user1);
-	    user2Dto = this.saveIfNotExist(user2);
+	    user1Dto = this.saveIfNotExist(email1);
+	    user2Dto = this.saveIfNotExist(email2);
 	} catch (InvalidUserException e) {
 	    log.error(e.getMessage(), e);
 	    return GeneralResponseEntity.createErrorResponseEntity(e.getMessage());
@@ -85,7 +86,7 @@ public class FriendsServiceImpl implements FriendsService {
 	// System.out.println("user 2 before \n" + user2Dto);
 
 	// if they are already friends, dont make them friends again
-	if (Optional.ofNullable(user1Dto.getFriends()).orElse(Sets.newHashSet()).contains(user2Dto)) {
+	if (Optional.ofNullable(user1Dto.getAllFriends()).orElse(Sets.newHashSet()).contains(user2Dto)) {
 	    return GeneralResponseEntity.createErrorResponseEntity(
 		    "Cannot add them as friends as they are already friends");
 	}
@@ -105,8 +106,8 @@ public class FriendsServiceImpl implements FriendsService {
 	user1Dto.addFriend(user2Dto);
 	this.userRepository.save(user1Dto);
 
-	user2Dto.addFriend(user1Dto);
-	this.userRepository.save(user2Dto);
+	// user2Dto.addFriend(user1Dto);
+	// this.userRepository.save(user2Dto);
 
 	// System.out.println("user 1 after\n " + user1Dto);
 	// System.out.println("user 2 after\n" + user2Dto);
@@ -117,26 +118,25 @@ public class FriendsServiceImpl implements FriendsService {
 
     @Override
     public FriendsListResponseEntity getFriendsList(FriendsListRequestEntity entity) {
+
+	if (entity == null) {
+	    return FriendsListResponseEntity.createErrorResponseEntity("Invalid request");
+	}
+
+	User userDto;
+
 	try {
-	    EmailUtils.validateEmailOrThrowException(entity.getEmail());
+	    userDto = this.userService.validateEmailAndReturnUser(entity.getEmail());
 	} catch (InvalidUserException e) {
 	    log.error(e.getMessage(), e);
 	    return FriendsListResponseEntity.createErrorResponseEntity(e.getMessage());
 	}
 
-	String email = EmailUtils.sanitizeEmail(entity.getEmail());
-
-	User userDto = this.userRepository.findFirstByEmail(email);
-	if (userDto == null) {
-	    return FriendsListResponseEntity.createErrorResponseEntity("User is not a registered member");
-	}
-
-	List<String> friendList = Optional.ofNullable(userDto.getFriends())
-					  .orElse(Sets.newHashSet())
-					  .stream()
-					  .map(User::getEmail)
-					  .filter(str -> StringUtils.isNotEmpty(str))
-					  .collect(Collectors.toList());
+	List<String> friendList = userDto.getAllFriends()
+					 .stream()
+					 .map(User::getEmail)
+					 .filter(str -> StringUtils.isNotEmpty(str))
+					 .collect(Collectors.toList());
 
 	return FriendsListResponseEntity.builder()
 					.success(true)
@@ -149,6 +149,10 @@ public class FriendsServiceImpl implements FriendsService {
     @Override
     public FriendsListResponseEntity getCommonFriends(FriendsEntity friendsEntity) {
 
+	if (friendsEntity == null) {
+	    return FriendsListResponseEntity.createErrorResponseEntity("Invalid parameter");
+	}
+
 	if (CollectionUtils.isEmpty(friendsEntity.getFriends())) {
 	    return FriendsListResponseEntity.createErrorResponseEntity("Friend list cannot be empty");
 	}
@@ -157,37 +161,28 @@ public class FriendsServiceImpl implements FriendsService {
 		    "Please provide only 2 emails to get mutual friends");
 	}
 
-	String email1 = EmailUtils.sanitizeEmail(friendsEntity.getFriends().get(0));
-	String email2 = EmailUtils.sanitizeEmail(friendsEntity.getFriends().get(1));
-	if (email1.equals(email2)) {
-	    return FriendsListResponseEntity.createErrorResponseEntity(
-		    "Cannot find mutual friends if both emails are same");
+	User user1Dto, user2Dto = null;
+	try {
+	    user1Dto = this.userService.validateEmailAndReturnUser(friendsEntity.getFriends().get(0));
+	    user2Dto = this.userService.validateEmailAndReturnUser(friendsEntity.getFriends().get(1));
+	} catch (InvalidUserException e) {
+	    log.error(e.getMessage(), e);
+	    return FriendsListResponseEntity.createErrorResponseEntity(e.getMessage());
 	}
 
-	User user1Dto = this.userRepository.findFirstByEmail(email1);
-	if (user1Dto == null) {
+	if (user1Dto.equals(user2Dto)) {
 	    return FriendsListResponseEntity.createErrorResponseEntity(
-		    "User with email " + email1 + " is not a registered member");
+		    "Cannot find common friends if both users are same");
 	}
 
-	User user2Dto = this.userRepository.findFirstByEmail(email2);
-	if (user2Dto == null) {
-	    return FriendsListResponseEntity.createErrorResponseEntity(
-		    "User with email " + email2 + " is not a registered member");
-	}
+	Set<User> friends = user1Dto.getAllFriends();
 
-	// find intersection of 2 friends list, this is wrong way, but due to time
-	// constraint, I am doing this method. Ideally, I should write a SQL query that
-	// would get this list
-
-	Set<User> friendsUser1 = Optional.ofNullable(user1Dto.getFriends()).orElse(Sets.newHashSet());
-
-	friendsUser1.retainAll(Optional.ofNullable(user2Dto.getFriends()).orElse(Sets.newHashSet()));
+	friends.retainAll(Optional.ofNullable(user2Dto.getAllFriends()).orElse(Sets.newHashSet()));
 
 	return FriendsListResponseEntity.builder()
 					.success(true)
-					.friends(friendsUser1.stream().map(User::getEmail).collect(Collectors.toList()))
-					.count(Long.valueOf(user1Dto.getFriends().size()))
+					.friends(friends.stream().map(User::getEmail).collect(Collectors.toList()))
+					.count(Long.valueOf(friends.size()))
 					.build();
 
     }
