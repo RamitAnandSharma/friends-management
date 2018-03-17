@@ -13,9 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import com.agrawal.rajeshwar.api.model.FriendsEntity;
+import com.agrawal.rajeshwar.api.model.FriendsListRequestEntity;
 import com.agrawal.rajeshwar.api.model.FriendsListResponseEntity;
 import com.agrawal.rajeshwar.api.model.GeneralResponseEntity;
-import com.agrawal.rajeshwar.api.model.UserEntity;
 import com.agrawal.rajeshwar.dao.UserRepository;
 import com.agrawal.rajeshwar.dto.User;
 import com.agrawal.rajeshwar.exceptions.InvalidUserException;
@@ -32,7 +32,7 @@ public class FriendsServiceImpl implements FriendsService {
     @Autowired
     private UserRepository userRepository;
 
-    private User saveIfNotExist(UserEntity userEntity) throws InvalidUserException {
+    private User saveIfNotExist(FriendsListRequestEntity userEntity) throws InvalidUserException {
 
 	if (userEntity == null) {
 	    throw new InvalidUserException("User cannot be null");
@@ -59,12 +59,14 @@ public class FriendsServiceImpl implements FriendsService {
 	    return GeneralResponseEntity.createErrorResponseEntity("Please provide only 2 emails to make them friends");
 	}
 
-	UserEntity user1 = UserEntity.builder()
-				     .email(EmailUtils.sanitizeEmail(friendsEntity.getFriends().get(0)))
-				     .build();
-	UserEntity user2 = UserEntity.builder()
-				     .email(EmailUtils.sanitizeEmail(friendsEntity.getFriends().get(1)))
-				     .build();
+	FriendsListRequestEntity user1 = FriendsListRequestEntity.builder()
+								 .email(EmailUtils.sanitizeEmail(
+									 friendsEntity.getFriends().get(0)))
+								 .build();
+	FriendsListRequestEntity user2 = FriendsListRequestEntity.builder()
+								 .email(EmailUtils.sanitizeEmail(
+									 friendsEntity.getFriends().get(1)))
+								 .build();
 	if (user1.getEmail().equals(user2.getEmail())) {
 	    return GeneralResponseEntity.createErrorResponseEntity("Cannot make friends, if users are same");
 	}
@@ -79,8 +81,8 @@ public class FriendsServiceImpl implements FriendsService {
 	    return GeneralResponseEntity.createErrorResponseEntity(e.getMessage());
 	}
 
-	System.out.println("user 1 before \n" + user1Dto);
-	System.out.println("user 2 before \n" + user2Dto);
+	// System.out.println("user 1 before \n" + user1Dto);
+	// System.out.println("user 2 before \n" + user2Dto);
 
 	// if they are already friends, dont make them friends again
 	if (Optional.ofNullable(user1Dto.getFriends()).orElse(Sets.newHashSet()).contains(user2Dto)) {
@@ -106,23 +108,25 @@ public class FriendsServiceImpl implements FriendsService {
 	user2Dto.addFriend(user1Dto);
 	this.userRepository.save(user2Dto);
 
-	System.out.println("user 1 after\n " + user1Dto);
-	System.out.println("user 2 after\n" + user2Dto);
+	// System.out.println("user 1 after\n " + user1Dto);
+	// System.out.println("user 2 after\n" + user2Dto);
 
 	return GeneralResponseEntity.builder().success(true).build();
 
     }
 
     @Override
-    public FriendsListResponseEntity getFriendsList(String email) {
+    public FriendsListResponseEntity getFriendsList(FriendsListRequestEntity entity) {
 	try {
-	    EmailUtils.validateEmailOrThrowException(email);
+	    EmailUtils.validateEmailOrThrowException(entity.getEmail());
 	} catch (InvalidUserException e) {
 	    log.error(e.getMessage(), e);
 	    return FriendsListResponseEntity.createErrorResponseEntity(e.getMessage());
 	}
 
-	User userDto = this.userRepository.findFirstByEmail(email.trim());
+	String email = EmailUtils.sanitizeEmail(entity.getEmail());
+
+	User userDto = this.userRepository.findFirstByEmail(email);
 	if (userDto == null) {
 	    return FriendsListResponseEntity.createErrorResponseEntity("User is not a registered member");
 	}

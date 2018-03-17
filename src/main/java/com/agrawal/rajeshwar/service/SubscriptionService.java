@@ -1,10 +1,14 @@
 package com.agrawal.rajeshwar.service;
 
 import com.agrawal.rajeshwar.api.model.GeneralResponseEntity;
-import com.agrawal.rajeshwar.api.model.SubscriptionEntity;
+import com.agrawal.rajeshwar.api.model.ReceipentsResponseEntity;
+import com.agrawal.rajeshwar.api.model.SubscriptionRequestEntity;
+import com.agrawal.rajeshwar.api.model.UpdatesRequestEntity;
 
 public interface SubscriptionService {
-    GeneralResponseEntity addFollow(SubscriptionEntity addFollowerEntity);
+    GeneralResponseEntity addFollow(SubscriptionRequestEntity addFollowerEntity);
 
-    GeneralResponseEntity blockUpdates(SubscriptionEntity addFollowerEntity);
+    GeneralResponseEntity blockUpdates(SubscriptionRequestEntity addFollowerEntity);
+
+    ReceipentsResponseEntity getAllUpdateReceipents(UpdatesRequestEntity updatesRequestEntity);
 }

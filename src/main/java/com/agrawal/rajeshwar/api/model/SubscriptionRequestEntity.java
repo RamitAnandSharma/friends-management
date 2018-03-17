@@ -10,11 +10,11 @@ import lombok.NonNull;
 import lombok.Value;
 
 @JsonInclude(JsonInclude.Include.ALWAYS)
-@JsonDeserialize(builder = SubscriptionEntity.SubscriptionEntityBuilder.class)
+@JsonDeserialize(builder = SubscriptionRequestEntity.SubscriptionRequestEntityBuilder.class)
 @Value
 @Builder
 @AllArgsConstructor
-public class SubscriptionEntity {
+public class SubscriptionRequestEntity {
 
     @NonNull
     private String requestor;
@@ -23,6 +23,6 @@ public class SubscriptionEntity {
     private String target;
 
     @JsonPOJOBuilder(withPrefix = "")
-    public static final class SubscriptionEntityBuilder {
+    public static final class SubscriptionRequestEntityBuilder {
     }
 }

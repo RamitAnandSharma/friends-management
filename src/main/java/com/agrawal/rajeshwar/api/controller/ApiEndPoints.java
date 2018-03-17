@@ -10,4 +10,6 @@ public class ApiEndPoints {
     public static final String ADD_FOLLOW = "/addfollower";
 
     public static final String BLOCK_UPDATES = "/blockupdates";
+
+    public static final String ALL_UPDATE_RECEIPENTS = "/updatereceipents";
 }
