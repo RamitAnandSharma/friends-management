@@ -39,37 +39,41 @@ public class User implements Serializable {
 
     @Override
     public String toString() {
-	String s = "User [email=" + this.email + "] friends are "
+	StringBuilder s = new StringBuilder("User [email=" + this.email + "] friends are "
 		+ Optional.ofNullable(this.friends)
 			  .orElse(Sets.newHashSet())
 			  .stream()
 			  .filter(Objects::nonNull)
 			  .map(User::getEmail)
-			  .collect(Collectors.toList());
-	s = s + "\n subscribers are "
-		+ Optional.ofNullable(this.isFollowingUsers)
-			  .orElse(Sets.newHashSet())
-			  .stream()
-			  .filter(Objects::nonNull)
-			  .map(User::getEmail)
-			  .collect(Collectors.toList());
+			  .collect(Collectors.toList()));
+	s.append("\n isFollowingUsers are " + Optional.ofNullable(this.isFollowingUsers)
+						      .orElse(Sets.newHashSet())
+						      .stream()
+						      .filter(Objects::nonNull)
+						      .map(User::getEmail)
+						      .collect(Collectors.toList()));
 
-	s = s + "\n hasBlockedUsers are "
-		+ Optional.ofNullable(this.hasBlockedUsers)
-			  .orElse(Sets.newHashSet())
-			  .stream()
-			  .filter(Objects::nonNull)
-			  .map(User::getEmail)
-			  .collect(Collectors.toList());
+	s.append("\n isFollowedByUsers are " + Optional.ofNullable(this.isFollowedByUsers)
+						       .orElse(Sets.newHashSet())
+						       .stream()
+						       .filter(Objects::nonNull)
+						       .map(User::getEmail)
+						       .collect(Collectors.toList()));
 
-	s = s + "\n isBlockedByUsers are "
-		+ Optional.ofNullable(this.isBlockedByUsers)
-			  .orElse(Sets.newHashSet())
-			  .stream()
-			  .filter(Objects::nonNull)
-			  .map(User::getEmail)
-			  .collect(Collectors.toList());
-	return s;
+	s.append("\n hasBlockedUsers are " + Optional.ofNullable(this.hasBlockedUsers)
+						     .orElse(Sets.newHashSet())
+						     .stream()
+						     .filter(Objects::nonNull)
+						     .map(User::getEmail)
+						     .collect(Collectors.toList()));
+
+	s.append("\n isBlockedByUsers are " + Optional.ofNullable(this.isBlockedByUsers)
+						      .orElse(Sets.newHashSet())
+						      .stream()
+						      .filter(Objects::nonNull)
+						      .map(User::getEmail)
+						      .collect(Collectors.toList()));
+	return s.toString();
     }
 
     @Id
@@ -97,6 +101,10 @@ public class User implements Serializable {
     private Set<User> isFollowingUsers;
 
     @ManyToMany
+    @JoinTable(name = "subscriber", joinColumns = @JoinColumn(name = "targetUserId"), inverseJoinColumns = @JoinColumn(name = "id"))
+    private Set<User> isFollowedByUsers;
+
+    @ManyToMany
     @JoinTable(name = "blockers", joinColumns = @JoinColumn(name = "id"), inverseJoinColumns = @JoinColumn(name = "targetUserId"))
     private Set<User> hasBlockedUsers;
 
@@ -111,7 +119,7 @@ public class User implements Serializable {
 	this.friends.add(user);
     }
 
-    public void addSubscriber(User user) {
+    public void followAnotherUser(User user) {
 	if (CollectionUtils.isEmpty(this.isFollowingUsers)) {
 	    this.isFollowingUsers = Sets.newHashSet();
 	}

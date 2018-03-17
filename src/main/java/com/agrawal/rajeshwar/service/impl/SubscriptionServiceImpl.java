@@ -1,7 +1,5 @@
 package com.agrawal.rajeshwar.service.impl;
 
-import javax.transaction.Transactional;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +18,6 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     private UserRepository userRepository;
 
     @Override
-    @Transactional
     public GeneralResponseEntity addFollow(SubscriptionEntity addFollowerEntity) {
 	GeneralResponseEntity validationResult = this.validateSubscriptionEntity(addFollowerEntity);
 	if (validationResult != null) {
@@ -30,6 +27,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 	String requestorMail = EmailUtils.sanitizeEmail(addFollowerEntity.getRequestor());
 	String targetMail = EmailUtils.sanitizeEmail(addFollowerEntity.getTarget());
 
+	// validate same eamil
 	if (requestorMail.equals(targetMail)) {
 	    return GeneralResponseEntity.createErrorResponseEntity("Cannot add follower for same user");
 	}
@@ -48,11 +46,12 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 	System.out.println("requestorDto before \n" + requestorDto);
 	System.out.println("targetDto before \n" + targetDto);
 
-	targetDto.addSubscriber(requestorDto);
-	this.userRepository.save(targetDto);
+	// add the requester in the followed by list of target
+	requestorDto.followAnotherUser(targetDto);
+	this.userRepository.save(requestorDto);
 
-	System.out.println("requestorDto after \n" + requestorDto);
-	System.out.println("targetDto after \n" + targetDto);
+	System.out.println("requestorDto after \n" + this.userRepository.findFirstByEmail(requestorMail));
+	System.out.println("targetDto after \n" + this.userRepository.findFirstByEmail(targetMail));
 
 	return GeneralResponseEntity.builder().success(true).build();
 
@@ -80,7 +79,6 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     }
 
     @Override
-    @Transactional
     public GeneralResponseEntity blockUpdates(SubscriptionEntity addFollowerEntity) {
 	GeneralResponseEntity validationResult = this.validateSubscriptionEntity(addFollowerEntity);
 	if (validationResult != null) {
@@ -107,11 +105,10 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 	System.out.println("targetDto before \n" + targetDto);
 
 	requestorDto.hasBlockedTheUser(targetDto);
-	this.userRepository.save(targetDto);
+	this.userRepository.save(requestorDto);
 
-	System.out.println("requestorDto after \n" + requestorDto);
-	targetDto = this.userRepository.findFirstByEmail(targetMail);
-	System.out.println("targetDto after \n" + targetDto);
+	System.out.println("requestorDto after \n" + this.userRepository.findFirstByEmail(requestorMail));
+	System.out.println("targetDto after \n" + this.userRepository.findFirstByEmail(targetMail));
 
 	return GeneralResponseEntity.builder().success(true).build();
 

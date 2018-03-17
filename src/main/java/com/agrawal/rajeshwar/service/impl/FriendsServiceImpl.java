@@ -70,6 +70,7 @@ public class FriendsServiceImpl implements FriendsService {
 	}
 	User user1Dto = null;
 	User user2Dto = null;
+	// create and save them if they dont exist
 	try {
 	    user1Dto = this.saveIfNotExist(user1);
 	    user2Dto = this.saveIfNotExist(user2);
@@ -81,6 +82,13 @@ public class FriendsServiceImpl implements FriendsService {
 	System.out.println("user 1 before \n" + user1Dto);
 	System.out.println("user 2 before \n" + user2Dto);
 
+	// if they are already friends, dont make them friends again
+	if (Optional.ofNullable(user1Dto.getFriends()).orElse(Sets.newHashSet()).contains(user2Dto)) {
+	    return GeneralResponseEntity.createErrorResponseEntity(
+		    "Cannot add them as friends as they are already friends");
+	}
+
+	// if they block each other, dont make them friends
 	if (Optional.ofNullable(user1Dto.getHasBlockedUsers()).orElse(Sets.newHashSet()).contains(user2Dto)) {
 	    return GeneralResponseEntity.createErrorResponseEntity("Cannot add them as friends as "
 		    + user1Dto.getEmail() + " has blocked user " + user2Dto.getEmail());
@@ -91,6 +99,7 @@ public class FriendsServiceImpl implements FriendsService {
 		    + user2Dto.getEmail() + " has blocked user " + user1Dto.getEmail());
 	}
 
+	// make them mutual friends
 	user1Dto.addFriend(user2Dto);
 	this.userRepository.save(user1Dto);
 
