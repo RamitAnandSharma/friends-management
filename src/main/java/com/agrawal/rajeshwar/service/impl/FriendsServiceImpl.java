@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import com.agrawal.rajeshwar.api.model.AddFriendsResponseEntity;
+import com.agrawal.rajeshwar.api.model.GeneralResponseEntity;
 import com.agrawal.rajeshwar.api.model.FriendsEntity;
 import com.agrawal.rajeshwar.api.model.FriendsListResponseEntity;
 import com.agrawal.rajeshwar.api.model.UserEntity;
@@ -41,8 +41,8 @@ public class FriendsServiceImpl implements FriendsService {
 	if (userEntity == null) {
 	    throw new InvalidUserException("User cannot be null");
 	}
-	String sanitizeEmail = FriendsServiceImpl.sanitizeEmail(userEntity.getEmail());
-	this.validateEmailOrThrowException(sanitizeEmail);
+	String sanitizeEmail = EmailValidator.sanitizeEmail(userEntity.getEmail());
+	EmailValidator.validateEmailOrThrowException(sanitizeEmail);
 	User existingUser = this.userRepository.findFirstByEmail(sanitizeEmail);
 	if (existingUser == null) {
 	    return this.userRepository.save(User.builder().email(sanitizeEmail).build());
@@ -52,39 +52,26 @@ public class FriendsServiceImpl implements FriendsService {
 
     }
 
-    private void validateEmailOrThrowException(String email) throws InvalidUserException {
-	if (StringUtils.isEmpty(email)) {
-	    throw new InvalidUserException("User Email cannot be null");
-	}
-	if (!EmailValidator.isValidMail(email)) {
-	    throw new InvalidUserException("Invalid Email " + email);
-	}
-    }
-
-    private static String sanitizeEmail(String email) {
-	return Optional.ofNullable(email).orElse("").trim().toLowerCase();
-    }
-
     @Transactional(rollbackOn = Exception.class)
     @Override
-    public AddFriendsResponseEntity addFriends(FriendsEntity friendsEntity) {
+    public GeneralResponseEntity addFriends(FriendsEntity friendsEntity) {
 
 	if (CollectionUtils.isEmpty(friendsEntity.getFriends())) {
-	    return AddFriendsResponseEntity.createErrorResponseEntity("Friend list cannot be empty");
+	    return GeneralResponseEntity.createErrorResponseEntity("Friend list cannot be empty");
 	}
 	if (friendsEntity.getFriends().size() != 2) {
-	    return AddFriendsResponseEntity.createErrorResponseEntity(
+	    return GeneralResponseEntity.createErrorResponseEntity(
 		    "Please provide only 2 emails to make them friends");
 	}
 
 	UserEntity user1 = UserEntity.builder()
-				     .email(FriendsServiceImpl.sanitizeEmail(friendsEntity.getFriends().get(0)))
+				     .email(EmailValidator.sanitizeEmail(friendsEntity.getFriends().get(0)))
 				     .build();
 	UserEntity user2 = UserEntity.builder()
-				     .email(FriendsServiceImpl.sanitizeEmail(friendsEntity.getFriends().get(1)))
+				     .email(EmailValidator.sanitizeEmail(friendsEntity.getFriends().get(1)))
 				     .build();
 	if (user1.getEmail().equals(user2.getEmail())) {
-	    return AddFriendsResponseEntity.createErrorResponseEntity("Cannot make friends, if users are same");
+	    return GeneralResponseEntity.createErrorResponseEntity("Cannot make friends, if users are same");
 	}
 	User user1Dto = null;
 	User user2Dto = null;
@@ -93,7 +80,7 @@ public class FriendsServiceImpl implements FriendsService {
 	    user2Dto = this.saveIfNotExist(user2);
 	} catch (InvalidUserException e) {
 	    log.error(e.getMessage(), e);
-	    return AddFriendsResponseEntity.createErrorResponseEntity(e.getMessage());
+	    return GeneralResponseEntity.createErrorResponseEntity(e.getMessage());
 	}
 
 	System.out.println("user 1 before \n" + user1Dto);
@@ -108,14 +95,14 @@ public class FriendsServiceImpl implements FriendsService {
 	System.out.println("user 1 after\n " + user1Dto);
 	System.out.println("user 2 after\n" + user2Dto);
 
-	return AddFriendsResponseEntity.builder().success(true).build();
+	return GeneralResponseEntity.builder().success(true).build();
 
     }
 
     @Override
     public FriendsListResponseEntity getFriendsList(String email) {
 	try {
-	    this.validateEmailOrThrowException(email);
+	    EmailValidator.validateEmailOrThrowException(email);
 	} catch (InvalidUserException e) {
 	    log.error(e.getMessage(), e);
 	    return FriendsListResponseEntity.createErrorResponseEntity(e.getMessage());
@@ -152,8 +139,8 @@ public class FriendsServiceImpl implements FriendsService {
 		    "Please provide only 2 emails to get mutual friends");
 	}
 
-	String email1 = FriendsServiceImpl.sanitizeEmail(friendsEntity.getFriends().get(0));
-	String email2 = FriendsServiceImpl.sanitizeEmail(friendsEntity.getFriends().get(1));
+	String email1 = EmailValidator.sanitizeEmail(friendsEntity.getFriends().get(0));
+	String email2 = EmailValidator.sanitizeEmail(friendsEntity.getFriends().get(1));
 	if (email1.equals(email2)) {
 	    return FriendsListResponseEntity.createErrorResponseEntity(
 		    "Cannot find mutual friends if both emails are same");

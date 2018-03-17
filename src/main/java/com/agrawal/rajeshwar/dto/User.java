@@ -39,13 +39,21 @@ public class User implements Serializable {
 
     @Override
     public String toString() {
-	return "User [email=" + this.email + "] friends are "
+	String s = "User [email=" + this.email + "] friends are "
 		+ Optional.ofNullable(this.friends)
 			  .orElse(Sets.newHashSet())
 			  .stream()
 			  .filter(Objects::nonNull)
 			  .map(User::getEmail)
 			  .collect(Collectors.toList());
+	s = s + "\n subscribers are "
+		+ Optional.ofNullable(this.subscribers)
+			  .orElse(Sets.newHashSet())
+			  .stream()
+			  .filter(Objects::nonNull)
+			  .map(User::getEmail)
+			  .collect(Collectors.toList());
+	return s;
     }
 
     @Id
@@ -68,11 +76,22 @@ public class User implements Serializable {
     @JoinTable(name = "friends", joinColumns = @JoinColumn(name = "friendId"), inverseJoinColumns = @JoinColumn(name = "id"))
     private Set<User> friendOf;
 
+    @ManyToMany
+    @JoinTable(name = "subscriber", joinColumns = @JoinColumn(name = "id"), inverseJoinColumns = @JoinColumn(name = "targetUserId"))
+    private Set<User> subscribers;
+
     public void addFriend(User user) {
 	if (CollectionUtils.isEmpty(this.friends)) {
 	    this.friends = Sets.newHashSet();
 	}
 	this.friends.add(user);
+    }
+
+    public void addSubscriber(User user) {
+	if (CollectionUtils.isEmpty(this.subscribers)) {
+	    this.subscribers = Sets.newHashSet();
+	}
+	this.subscribers.add(user);
     }
 
 }
