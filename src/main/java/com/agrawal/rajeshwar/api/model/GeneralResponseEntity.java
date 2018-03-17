@@ -10,7 +10,7 @@ import lombok.Builder;
 import lombok.Value;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonDeserialize(builder = GeneralResponseEntity.AddFriendsResponseEntityBuilder.class)
+@JsonDeserialize(builder = GeneralResponseEntity.GeneralResponseEntityBuilder.class)
 @Value
 @Builder
 @AllArgsConstructor
@@ -21,7 +21,7 @@ public class GeneralResponseEntity implements ErrorResponseEntityInterface {
     private String errorMessage;
 
     @JsonPOJOBuilder(withPrefix = "")
-    public static final class AddFriendsResponseEntityBuilder {
+    public static final class GeneralResponseEntityBuilder {
     }
 
     @JsonIgnore

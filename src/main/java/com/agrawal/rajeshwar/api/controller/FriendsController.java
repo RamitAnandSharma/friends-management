@@ -7,23 +7,21 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.agrawal.rajeshwar.api.model.AddFollowerEntity;
 import com.agrawal.rajeshwar.api.model.FriendsEntity;
 import com.agrawal.rajeshwar.api.model.FriendsListResponseEntity;
 import com.agrawal.rajeshwar.api.model.GeneralResponseEntity;
+import com.agrawal.rajeshwar.api.model.SubscriptionEntity;
 import com.agrawal.rajeshwar.exceptions.InvalidUserException;
-import com.agrawal.rajeshwar.service.FollowerService;
 import com.agrawal.rajeshwar.service.FriendsService;
+import com.agrawal.rajeshwar.service.SubscriptionService;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
 
 @RestController
-@Slf4j
 @Api(tags = { "greetings" })
 public class FriendsController {
 
@@ -31,7 +29,7 @@ public class FriendsController {
     private FriendsService friendsService;
 
     @Autowired
-    private FollowerService followerService;
+    private SubscriptionService followerService;
 
     @RequestMapping(method = RequestMethod.POST, value = ApiEndPoints.CONNECT_FRIENDS, produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation("Connect 2 friends to make them friends")
@@ -74,10 +72,22 @@ public class FriendsController {
     @ApiResponses(value = { @ApiResponse(code = 200, message = "Success", response = GeneralResponseEntity.class),
 	    @ApiResponse(code = 422, message = "Invalid request parameters", response = GeneralResponseEntity.class),
 	    @ApiResponse(code = 500, message = "Internal Server Error", response = GeneralResponseEntity.class) })
-    public GeneralResponseEntity addFollow(@RequestBody(required = true) @NonNull AddFollowerEntity addFollowerEntity)
+    public GeneralResponseEntity addFollow(@RequestBody(required = true) @NonNull SubscriptionEntity addFollowerEntity)
 	    throws InvalidUserException {
 
 	return this.followerService.addFollow(addFollowerEntity);
+
+    }
+
+    @RequestMapping(method = RequestMethod.POST, value = ApiEndPoints.BLOCK_UPDATES, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation("Connect 2 friends to make them friends")
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success", response = GeneralResponseEntity.class),
+	    @ApiResponse(code = 422, message = "Invalid request parameters", response = GeneralResponseEntity.class),
+	    @ApiResponse(code = 500, message = "Internal Server Error", response = GeneralResponseEntity.class) })
+    public GeneralResponseEntity blockUpdates(
+	    @RequestBody(required = true) @NonNull SubscriptionEntity addFollowerEntity) throws InvalidUserException {
+
+	return this.followerService.blockUpdates(addFollowerEntity);
 
     }
 }

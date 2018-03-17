@@ -8,4 +8,6 @@ public class ApiEndPoints {
     public static final String COMMON_FRIENDS = "/commonfriends";
 
     public static final String ADD_FOLLOW = "/addfollower";
+
+    public static final String BLOCK_UPDATES = "/blockupdates";
 }

@@ -9,7 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.agrawal.rajeshwar.exceptions.InvalidUserException;
 
-public class EmailValidator {
+public class EmailUtils {
     public static boolean isValidMail(String str) {
 	boolean result = true;
 	try {
@@ -29,7 +29,7 @@ public class EmailValidator {
 	if (StringUtils.isEmpty(email)) {
 	    throw new InvalidUserException("User Email cannot be null");
 	}
-	if (!EmailValidator.isValidMail(email)) {
+	if (!EmailUtils.isValidMail(email)) {
 	    throw new InvalidUserException("Invalid Email " + email);
 	}
     }

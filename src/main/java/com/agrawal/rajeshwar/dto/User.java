@@ -47,7 +47,23 @@ public class User implements Serializable {
 			  .map(User::getEmail)
 			  .collect(Collectors.toList());
 	s = s + "\n subscribers are "
-		+ Optional.ofNullable(this.subscribers)
+		+ Optional.ofNullable(this.isFollowingUsers)
+			  .orElse(Sets.newHashSet())
+			  .stream()
+			  .filter(Objects::nonNull)
+			  .map(User::getEmail)
+			  .collect(Collectors.toList());
+
+	s = s + "\n hasBlockedUsers are "
+		+ Optional.ofNullable(this.hasBlockedUsers)
+			  .orElse(Sets.newHashSet())
+			  .stream()
+			  .filter(Objects::nonNull)
+			  .map(User::getEmail)
+			  .collect(Collectors.toList());
+
+	s = s + "\n isBlockedByUsers are "
+		+ Optional.ofNullable(this.isBlockedByUsers)
 			  .orElse(Sets.newHashSet())
 			  .stream()
 			  .filter(Objects::nonNull)
@@ -78,7 +94,15 @@ public class User implements Serializable {
 
     @ManyToMany
     @JoinTable(name = "subscriber", joinColumns = @JoinColumn(name = "id"), inverseJoinColumns = @JoinColumn(name = "targetUserId"))
-    private Set<User> subscribers;
+    private Set<User> isFollowingUsers;
+
+    @ManyToMany
+    @JoinTable(name = "blockers", joinColumns = @JoinColumn(name = "id"), inverseJoinColumns = @JoinColumn(name = "targetUserId"))
+    private Set<User> hasBlockedUsers;
+
+    @ManyToMany
+    @JoinTable(name = "blockers", joinColumns = @JoinColumn(name = "targetUserId"), inverseJoinColumns = @JoinColumn(name = "id"))
+    private Set<User> isBlockedByUsers;
 
     public void addFriend(User user) {
 	if (CollectionUtils.isEmpty(this.friends)) {
@@ -88,10 +112,17 @@ public class User implements Serializable {
     }
 
     public void addSubscriber(User user) {
-	if (CollectionUtils.isEmpty(this.subscribers)) {
-	    this.subscribers = Sets.newHashSet();
+	if (CollectionUtils.isEmpty(this.isFollowingUsers)) {
+	    this.isFollowingUsers = Sets.newHashSet();
 	}
-	this.subscribers.add(user);
+	this.isFollowingUsers.add(user);
+    }
+
+    public void hasBlockedTheUser(User user) {
+	if (CollectionUtils.isEmpty(this.hasBlockedUsers)) {
+	    this.hasBlockedUsers = Sets.newHashSet();
+	}
+	this.hasBlockedUsers.add(user);
     }
 
 }
