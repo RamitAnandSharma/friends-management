@@ -1,4 +1,4 @@
-package com.agrawal.rajeshwar.webapi.entity;
+package com.agrawal.rajeshwar.api.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;

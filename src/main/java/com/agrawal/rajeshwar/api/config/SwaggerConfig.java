@@ -1,4 +1,4 @@
-package com.agrawal.rajeshwar.webapi.config;
+package com.agrawal.rajeshwar.api.config;
 
 import java.util.List;
 
@@ -37,7 +37,7 @@ public class SwaggerConfig {
 
 	return new Docket(DocumentationType.SWAGGER_2).select()
 						      .apis(RequestHandlerSelectors.basePackage(
-							      "com.agrawal.rajeshwar.webapi"))
+							      "com.agrawal.rajeshwar.api"))
 						      .paths(PathSelectors.any())
 						      .build()
 						      .useDefaultResponseMessages(false)
