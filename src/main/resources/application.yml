@@ -1,0 +1,7 @@
+server:
+  servlet:
+    path: /*
+    context-path: /friends-management
+  port: 8080
+logging:
+  config: classpath:logback.xml

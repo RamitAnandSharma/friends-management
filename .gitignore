@@ -1,0 +1,76 @@
+#eclipse settings files and build folders
+*.classpath
+*.factorypath
+*.launch
+*.project
+.apt_generated
+.recommenders/
+.settings/
+bin/
+coverage-report/
+MANIFEST.MF
+target/
+.metadata
+.loadpath
+.recommenders
+.recommenders/
+RemoteSystemsTempFiles/
+node_modules/
+.vscode/
+typings/
+Servers/
+.sonarlint/
+.jshintrc
+Gruntfile.js
+
+
+
+# log files
+*.log
+*.log.*
+.checkstyle
+
+# Compiled source
+*.class
+*.com
+*.dll
+*.exe
+*.o
+*.so
+*.swc
+*.swf
+*.js.map
+
+# Packages
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# OS generated files #
+._*
+.DS_Store
+.DS_Store?
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+#merge conflict resolution files
+*.orig
+
+
+#idea
+.idea/
+*.iml
+*.iws
+*.ipr
+
+#swagger doc
+.swagger/
+
+.springBeans
