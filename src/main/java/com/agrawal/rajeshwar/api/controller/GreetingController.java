@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.agrawal.rajeshwar.api.model.AddFriendsResponseEntity;
 import com.agrawal.rajeshwar.api.model.FriendsEntity;
 import com.agrawal.rajeshwar.api.model.Greeting;
-import com.agrawal.rajeshwar.api.model.UserEntity;
 import com.agrawal.rajeshwar.exceptions.InvalidUserException;
 import com.agrawal.rajeshwar.service.FriendsService;
 
@@ -43,19 +43,15 @@ public class GreetingController {
 	    @RequestParam(value = "name", defaultValue = "World", required = true) @NonNull String name)
 	    throws InvalidUserException {
 
-	int id = this.friendsService.saveUser(UserEntity.builder().email("abe@gmail.com").build());
-
-	log.debug(id + "");
-
 	return new Greeting(this.counter.incrementAndGet(), String.format(GreetingController.template, name));
     }
 
     @RequestMapping(method = RequestMethod.POST, value = "/friends", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation("Give greetings")
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success", response = Boolean.class),
-	    @ApiResponse(code = 422, message = "Invalid request parameters", response = Boolean.class),
-	    @ApiResponse(code = 500, message = "Internal Server Error", response = Boolean.class) })
-    public Boolean greeting(@RequestBody(required = true) @NonNull FriendsEntity friendsEntity)
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success", response = AddFriendsResponseEntity.class),
+	    @ApiResponse(code = 422, message = "Invalid request parameters", response = AddFriendsResponseEntity.class),
+	    @ApiResponse(code = 500, message = "Internal Server Error", response = AddFriendsResponseEntity.class) })
+    public AddFriendsResponseEntity greeting(@RequestBody(required = true) @NonNull FriendsEntity friendsEntity)
 	    throws InvalidUserException {
 
 	return this.friendsService.addFriends(friendsEntity);

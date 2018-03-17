@@ -54,8 +54,11 @@
 	</appender>
 
 	<!-- Send logs to both console and file audit -->
-	<logger name="com.agrawal.rajeshwar" level="DEBUG" additivity="false">
-		<appender-ref ref="FILE-AUDIT" />
+	<logger name="com.agrawal.rajeshwar" level="INFO" additivity="false">
+		<appender-ref ref="STDOUT" />
+	</logger>
+
+	<logger name="org.springframework" level="DEBUG" additivity="false">
 		<appender-ref ref="STDOUT" />
 	</logger>
 
