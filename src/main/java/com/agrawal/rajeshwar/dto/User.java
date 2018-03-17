@@ -1,5 +1,6 @@
 package com.agrawal.rajeshwar.dto;
 
+import java.io.Serializable;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -30,7 +31,12 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-public class User {
+public class User implements Serializable {
+    /**
+     *
+     */
+    private static final long serialVersionUID = 542041268714856030L;
+
     @Override
     public String toString() {
 	return "User [email=" + this.email + "] friends are "

@@ -56,4 +56,16 @@ public class FriendsController {
 	return this.friendsService.getFriendsList(email);
 
     }
+
+    @RequestMapping(method = RequestMethod.POST, value = ApiEndPoints.COMMON_FRIENDS, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation("Connect 2 friends to make them friends")
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success", response = AddFriendsResponseEntity.class),
+	    @ApiResponse(code = 422, message = "Invalid request parameters", response = AddFriendsResponseEntity.class),
+	    @ApiResponse(code = 500, message = "Internal Server Error", response = AddFriendsResponseEntity.class) })
+    public FriendsListResponseEntity commonFriends(@RequestBody(required = true) @NonNull FriendsEntity friendsEntity)
+	    throws InvalidUserException {
+
+	return this.friendsService.getCommonFriends(friendsEntity);
+
+    }
 }

@@ -2,6 +2,7 @@ package com.agrawal.rajeshwar.service.impl;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
@@ -136,6 +137,52 @@ public class FriendsServiceImpl implements FriendsService {
 					.success(true)
 					.friends(friendList)
 					.count(Long.valueOf(friendList.size()))
+					.build();
+
+    }
+
+    @Override
+    public FriendsListResponseEntity getCommonFriends(FriendsEntity friendsEntity) {
+
+	if (CollectionUtils.isEmpty(friendsEntity.getFriends())) {
+	    return FriendsListResponseEntity.createErrorResponseEntity("Friend list cannot be empty");
+	}
+	if (friendsEntity.getFriends().size() != 2) {
+	    return FriendsListResponseEntity.createErrorResponseEntity(
+		    "Please provide only 2 emails to get mutual friends");
+	}
+
+	String email1 = FriendsServiceImpl.sanitizeEmail(friendsEntity.getFriends().get(0));
+	String email2 = FriendsServiceImpl.sanitizeEmail(friendsEntity.getFriends().get(1));
+	if (email1.equals(email2)) {
+	    return FriendsListResponseEntity.createErrorResponseEntity(
+		    "Cannot find mutual friends if both emails are same");
+	}
+
+	User user1Dto = this.userRepository.findFirstByEmail(email1);
+	if (user1Dto == null) {
+	    return FriendsListResponseEntity.createErrorResponseEntity(
+		    "User with email " + email1 + " is not a registered member");
+	}
+
+	User user2Dto = this.userRepository.findFirstByEmail(email2);
+	if (user2Dto == null) {
+	    return FriendsListResponseEntity.createErrorResponseEntity(
+		    "User with email " + email2 + " is not a registered member");
+	}
+
+	// find intersection of 2 friends list, this is wrong way, but due to time
+	// constraint, I am doing this method. Ideally, I should write a SQL query that
+	// would get this list
+
+	Set<User> friendsUser1 = Optional.ofNullable(user1Dto.getFriends()).orElse(Sets.newHashSet());
+
+	friendsUser1.retainAll(Optional.ofNullable(user2Dto.getFriends()).orElse(Sets.newHashSet()));
+
+	return FriendsListResponseEntity.builder()
+					.success(true)
+					.friends(friendsUser1.stream().map(User::getEmail).collect(Collectors.toList()))
+					.count(Long.valueOf(user1Dto.getFriends().size()))
 					.build();
 
     }

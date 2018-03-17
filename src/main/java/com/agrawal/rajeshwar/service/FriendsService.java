@@ -10,4 +10,5 @@ public interface FriendsService {
 
     FriendsListResponseEntity getFriendsList(String email);
 
+    FriendsListResponseEntity getCommonFriends(FriendsEntity friendsEntity);
 }
